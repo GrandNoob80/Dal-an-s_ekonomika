@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dalīšanās Ekonomikas Spēle</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: #dcdcdc;
+        }
+        .game-container {
+            background: white;
+            color: #333;
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .item-card {
+            background: #f4f6f9;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 25px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        button {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+        button:hover {
+            transform: scale(1.03);
+        }
+        .btn-individual {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-individual:hover {
+            background-color: #c0392b;
+        }
+        .btn-sharing {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn-sharing:hover {
+            background-color: #27ae60;
+        }
+        .score-board {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .feedback {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        .restart-btn {
+            background-color: #3498db;
+            color: white;
+            margin-top: 20px;
+            display: none;
+            width: 100%;
+        }
+        .restart-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dalīšanās Ekonomikas Izaicinājums</h1>
+    <div class="subtitle">Izvērtē resursu un nosaki, vai tas ir individuālais īpašums vai dalīšanās ekonomika!</div>
+
+    <div class="game-container">
+        <div id="item-display" class="item-card">Spēle lādējas...</div>
+        
+        <div class="buttons" id="action-buttons">
+            <button class="btn-individual" onclick="checkAnswer('individual')">Individuālais (Katram savs)</button>
+            <button class="btn-sharing" onclick="checkAnswer('sharing')">Dalīšanās ekonomika</button>
+        </div>
+
+        <div class="feedback" id="feedback-text"></div>
+        <div class="score-board" id="score-display">Rezultāts: 0 / 0</div>
+
+        <button class="restart-btn" id="restart-button" onclick="restartGame()">Spēlēt vēlreiz</button>
+    </div>
+
+    <script>
+        const questions = [
+            { text: "Pērc pilnībā jaunu zāles pļāvēju tikai savam mazajam mauriņam", type: "individual" },
+            { text: "Izmanto Bolt Drive vai CityBee, lai aizbrauktu līdz centram", type: "sharing" },
+            { text: "Glabā garāžā instrumentu komplektu, ko izmanto reizi 2 gados", type: "individual" },
+            { text: "Izīrē savu brīvo istabu caur Airbnb ceļotājiem", type: "sharing" },
+            { text: "Piedalies BlaBlaCar braucienā, lai kopīgi ar citiem nokļūtu citā pilsētā", type: "sharing" },
+            { text: "Pērrc personīgo auto katram ģimenes loceklim atsevišķi ikdienas sastrēgumiem", type: "individual" },
+            { text: "Aizņemies urbi no kaimiņa vai kopienas fonda", type: "sharing" }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+
+        const itemDisplay = document.getElementById("item-display");
+        const feedbackText = document.getElementById("feedback-text");
+        const scoreDisplay = document.getElementById("score-display");
+        const actionButtons = document.getElementById("action-buttons");
+        const restartButton = document.getElementById("restart-button");
+
+        function loadQuestion() {
+            if (currentIndex < questions.length) {
+                itemDisplay.innerText = questions[currentIndex].text;
+                feedbackText.innerText = "";
+            } else {
+                itemDisplay.innerText = "🎉 Apsveicu! Spēle ir galā!";
+                actionButtons.style.display = "none";
+                feedbackText.innerText = `Tavs kopējais rezultāts: ${score} no ${questions.length} pareizām atbildēm!`;
+                restartButton.style.display = "block";
+            }
+            scoreDisplay.innerText = `Jautājums: ${Math.min(currentIndex + 1, questions.length)} / ${questions.length} | Punkti: ${score}`;
+        }
+
+        function checkAnswer(selectedType) {
+            const currentQ = questions[currentIndex];
+            if (selectedType === currentQ.type) {
+                feedbackText.style.color = "#27ae60";
+                feedbackText.innerText = "Pareizi! 👏";
+                score++;
+            } else {
+                feedbackText.style.color = "#c0392b";
+                feedbackText.innerText = "Kļūda! Paskatīsimies uzmanīgāk.";
+            }
+
+            currentIndex++;
+            setTimeout(loadQuestion, 1200); // Pāriet uz nākamo pēc 1.2 sekundēm
+        }
+
+        function restartGame() {
+            currentIndex = 0;
+            score = 0;
+            actionButtons.style.display = "flex";
+            restartButton.style.display = "none";
+            loadQuestion();
+        }
+
+        // Sākt spēli
+        loadQuestion();
+    </script>
+
+</body>
+</html>
