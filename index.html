@@ -41,7 +41,7 @@
             border-radius: 20px;
             padding: 40px;
             width: 100%;
-            max-width: 700px;
+            max-width: 750px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             text-align: center;
         }
@@ -58,9 +58,9 @@
             border: 2px solid #38bdf8;
             border-radius: 14px;
             padding: 30px;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 500;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             color: #f1f5f9;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
             line-height: 1.5;
@@ -81,12 +81,14 @@
             transition: all 0.2s ease;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.3);
         }
-        button:active {
-            transform: translateY(0);
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
         }
         .btn-individual {
             background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -96,14 +98,35 @@
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
-        .feedback {
+        .feedback-box {
             margin-top: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            min-height: 35px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: none;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .feedback-correct {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid #10b981;
+            color: #6ee7b7;
+        }
+        .feedback-incorrect {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+        .next-btn {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: white;
+            margin-top: 20px;
+            display: none;
+            width: 100%;
         }
         .score-board {
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 1.1rem;
             color: #38bdf8;
             font-weight: 600;
@@ -127,11 +150,13 @@
         <div id="item-display" class="item-card">Notiek ielāde...</div>
         
         <div class="buttons" id="action-buttons">
-            <button class="btn-individual" onclick="checkAnswer('individual')">Individuālais 🔒</button>
-            <button class="btn-sharing" onclick="checkAnswer('sharing')">Dalīšanās ekonomika 🤝</button>
+            <button class="btn-individual" id="btn-ind" onclick="checkAnswer('individual')">Individuālais 🔒</button>
+            <button class="btn-sharing" id="btn-shr" onclick="checkAnswer('sharing')">Dalīšanās ekonomika 🤝</button>
         </div>
 
-        <div class="feedback" id="feedback-text"></div>
+        <div id="feedback-box" class="feedback-box"></div>
+        <button class="next-btn" id="next-button" onclick="nextQuestion()">Nākamais jautājums ➡️</button>
+
         <div class="score-board" id="score-display">Punkti: 0</div>
 
         <button class="restart-btn" id="restart-button" onclick="restartGame()">Spēlēt vēlreiz 🔄</button>
@@ -139,63 +164,152 @@
 
     <script>
         const questions = [
-            { text: "Pērc pilnībā jaunu zāles pļāvēju tikai savam mazajam piemājas mauriņam", type: "individual" },
-            { text: "Izmanto Bolt Drive vai CityBee automašīnu, lai ātri aizbrauktu līdz pilsētas centram", type: "sharing" },
-            { text: "Glabā garāžā dārgu instrumentu komplektu, ko izmanto reizi divos gados", type: "individual" },
-            { text: "Izīrē savu brīvo istabu vai dzīvokli ceļotājiem caur Airbnb platformu", type: "sharing" },
-            { text: "Piedalies BlaBlaCar braucienā, lai kopīgi ar citiem nokļūtu citā pilsētā un dalītu degvielas izmaksas", type: "sharing" },
-            { text: "Pērc personīgo automašīnu katram ģimenes loceklim atsevišķi ikdienas braucieniem", type: "individual" },
-            { text: "Aizņemies retāk lietojamu urbi vai kāpnes no sava kaimiņa vai kopienas fonda", type: "sharing" },
-            { text: "Pērc privāto atpūtas māju mežā, kuru izmanto tikai pāris reizes gadā", type: "individual" },
-            { text: "Izmanto koprades telpas (co-working), lai strādātu birojā, daloties ar kopējām sapulču telpām un tehniku", type: "sharing" },
-            { text: "Pērc savu personīgo profesionālo fotokameru fotosesijai, kas notiks tikai vienu reizi dzīvē", type: "individual" },
-            { text: "Izīrē vai aizņemies bērnu ratiņus, drēbes un rotaļlietas no vecāku kopienas grupas", type: "sharing" },
-            { text: "Iegādājies lielu grāmatu kolekciju savā grāmatplauktā, ko izlasi tieši vienu reizi", type: "individual" },
-            { text: "Izmanto velosipēdu koplietošanas stacijas pilsētā, lai nokļūtu galamērķī", type: "sharing" },
-            { text: "Pasūti individuālu privāto taksometru braucienam vienai personai, kurš brauc tukšs atpakaļ", type: "individual" },
-            { text: "Piedalies laika bankā (TimeBank), kur apmainies ar prasmēm un laiku, piemēram, apmācīzi kādu programmēt pretī saņemot palīdzību dārza darbos", type: "sharing" }
+            { 
+                text: "Pērc pilnībā jaunu zāles pļāvēju tikai savam mazajam piemājas mauriņam", 
+                type: "individual",
+                explanation: "Šis ir individuālais īpašums, jo prece pieder tikai tev un tiek izmantota reti, neizmantojot koplietošanas potenciālu."
+            },
+            { 
+                text: "Izmanto Bolt Drive vai CityBee automašīnu, lai ātri aizbrauktu līdz pilsētas centram", 
+                type: "sharing",
+                explanation: "Tā ir dalīšanās ekonomika (resursu koplietošana), kur tu maksā tikai par faktisko lietošanas laiku, neuzturot savu personīgo auto."
+            },
+            { 
+                text: "Glabā garāžā dārgu instrumentu komplektu, ko izmanto reizi divos gados", 
+                type: "individual",
+                explanation: "Individuālais īpašums — resurss stāv dīkstāvē un aizņem vietu, lai gan to varētu aizņemties no kaimiņiem."
+            },
+            { 
+                text: "Izīrē savu brīvo istabu vai dzīvokli ceļotājiem caur Airbnb platformu", 
+                type: "sharing",
+                explanation: "Klasisks dalīšanās ekonomikas piemērs, kur neizmantots mājokļa resurss tiek piedāvāts citiem, gūstot peļņu."
+            },
+            { 
+                text: "Piedalies BlaBlaCar braucienā, lai kopīgi ar citiem nokļūtu citā pilsētā un dalītu degvielas izmaksas", 
+                type: "sharing",
+                explanation: "Resursu kopīga izmantošana transportā, kas samazina izmaksas un ekoloģisko pēdu."
+            },
+            { 
+                text: "Pērc personīgo automašīnu katram ģimenes loceklim atsevišķi ikdienas braucieniem", 
+                type: "individual",
+                explanation: "Individuālais īpašums, kas rada lielas uzturēšanas izmaksas un palielina sastrēgumus un stāvvietu deficītu."
+            },
+            { 
+                text: "Aizņemies retāk lietojamu urbi vai kāpnes no sava kaimiņa vai kopienas fonda", 
+                type: "sharing",
+                explanation: "Lielisks lokālas kopienas dalīšanās ekonomikas piemērs, kas ietaupa naudu un resursus."
+            },
+            { 
+                text: "Pērc privāto atpūtas māju mežā, kuru izmanto tikai pāris reizes gadā", 
+                type: "individual",
+                explanation: "Individuālais īpašums, kas lielāko gada daļu stāv tukšs (atšķirībā no izīrējamām brīvdienu mājām)."
+            },
+            { 
+                text: "Izmanto koprades telpas (co-working), lai strādātu birojā, daloties ar kopējām sapulču telpām un tehniku", 
+                type: "sharing",
+                explanation: "Biznesa vides dalīšanās ekonomika, kas optimizē telpas un aprīkojuma izmantošanu."
+            },
+            { 
+                text: "Pērc savu personīgo profesionālo fotokameru fotosesijai, kas notiks tikai vienu reizi dzīvē", 
+                type: "individual",
+                explanation: "Individuālais pirkums, lai gan finansiāli un praktiski gudrāk būtu to iznomāt."
+            },
+            { 
+                text: "Izīrē vai aizņemies bērnu ratiņus, drēbes un rotaļlietas no vecāku kopienas grupas", 
+                type: "sharing",
+                explanation: "Ekonomisks un ilgtspējīgs risinājums, jo bērnu lietas tiek lietotas ļoti īsu laiku."
+            },
+            { 
+                text: "Iegādājies lielu grāmatu kolekciju savā grāmatplauktā, ko izlasi tieši vienu reizi", 
+                type: "individual",
+                explanation: "Individuālais īpašums (lai gan to varētu aizņemties bibliotēkā vai mainīties ar draugiem)."
+            },
+            { 
+                text: "Izmanto velosipēdu koplietošanas stacijas pilsētā, lai nokļūtu galamērķī", 
+                type: "sharing",
+                explanation: "Pilsētas mikromobilitātes koplietošanas sistēma, kas ir daļa no dalīšanās ekonomikas."
+            },
+            { 
+                text: "Pasūti individuālu privāto taksometru braucienam vienai personai, kurš brauc tukšs atpakaļ", 
+                type: "individual",
+                explanation: "Privāts pakalpojums bez resursu koplietošanas elementiem (atšķirībā no kopbraukšanas)."
+            },
+            { 
+                text: "Piedalies laika bankā (TimeBank), kur apmainies ar prasmēm un laiku, piemēram, apmācīzi kādu programmēt pretī saņemot palīdzību dārza darbos", 
+                type: "sharing",
+                explanation: "Prasmju un laika dalīšanās ekonomika, kur naudas vietā valūta ir laiks un savstarpējā palīdzība."
+            }
         ];
 
         let currentIndex = 0;
         let score = 0;
 
         const itemDisplay = document.getElementById("item-display");
-        const feedbackText = document.getElementById("feedback-text");
+        const feedbackBox = document.getElementById("feedback-box");
         const scoreDisplay = document.getElementById("score-display");
         const progressText = document.getElementById("progress-text");
         const actionButtons = document.getElementById("action-buttons");
         const restartButton = document.getElementById("restart-button");
+        const nextButton = document.getElementById("next-button");
+        const btnInd = document.getElementById("btn-ind");
+        const btnShr = document.getElementById("btn-shr");
 
         function loadQuestion() {
             if (currentIndex < questions.length) {
                 progressText.innerText = `Jautājums ${currentIndex + 1} / ${questions.length}`;
                 itemDisplay.innerText = questions[currentIndex].text;
-                feedbackText.innerText = "";
+                feedbackBox.style.display = "none";
+                nextButton.style.display = "none";
+                
+                // Atgriež pogas aktīvā stāvoklī
+                btnInd.disabled = false;
+                btnShr.disabled = false;
             } else {
                 progressText.innerText = "Spēle noslēgusies!";
                 itemDisplay.innerText = "🎉 Apsveicu! Izaicinājums ir veiksmīgi pabeigts!";
                 actionButtons.style.display = "none";
-                feedbackText.style.color = "#38bdf8";
-                feedbackText.innerText = `Tavs kopējais rezultāts: ${score} no ${questions.length} pareizām atbildēm!`;
-                scoreDisplay.innerText = "";
+                feedbackBox.style.display = "none";
+                nextButton.style.display = "none";
+                scoreDisplay.style.fontSize = "1.3rem";
+                scoreDisplay.innerText = `Tavs kopējais rezultāts: ${score} no ${questions.length} pareizām atbildēm!`;
                 restartButton.style.display = "block";
             }
         }
 
         function checkAnswer(selectedType) {
             const currentQ = questions[currentIndex];
+            
+            // Deaktivizē atbilžu pogas, lai nevarētu vairākkārt klikšķināt
+            btnInd.disabled = true;
+            btnShr.disabled = true;
+
+            feedbackBox.style.display = "block";
+
             if (selectedType === currentQ.type) {
-                feedbackText.style.color = "#10b981";
-                feedbackText.innerText = "Pareizi! 👏 Lieliska izvēle.";
+                feedbackBox.className = "feedback-box feedback-correct";
+                feedbackBox.innerHTML = `<strong>Pareizi! 👏</strong> ${currentQ.explanation}`;
                 score++;
             } else {
-                feedbackText.style.color = "#ef4444";
-                feedbackText.innerText = "Kļūda! Šeit derēja cita pieeja.";
+                feedbackBox.className = "feedback-box feedback-incorrect";
+                feedbackBox.innerHTML = `<strong>Kļūda! ❌</strong> ${currentQ.explanation}`;
             }
 
             scoreDisplay.innerText = `Punkti: ${score}`;
+            
+            // Parāda nākamo jautājumu pogu
+            if (currentIndex < questions.length - 1) {
+                nextButton.style.display = "block";
+            } else {
+                // Ja šis bija pēdējais jautājums, uzreiz rādīsim rezultātu pēc nelielas pauzes vai ļaujam nospiežot turpināt
+                nextButton.innerText = "Skatīt rezultātus 🏆";
+                nextButton.style.display = "block";
+            }
+        }
+
+        function nextQuestion() {
             currentIndex++;
-            setTimeout(loadQuestion, 1400); 
+            nextButton.innerText = "Nākamais jautājums ➡️";
+            loadQuestion();
         }
 
         function restartGame() {
@@ -203,6 +317,7 @@
             score = 0;
             actionButtons.style.display = "flex";
             restartButton.style.display = "none";
+            scoreDisplay.style.fontSize = "1.1rem";
             scoreDisplay.innerText = "Punkti: 0";
             loadQuestion();
         }
